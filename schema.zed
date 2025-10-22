@@ -1,0 +1,86 @@
+definition user {}
+
+caveat is_compliant(required_signatures list<map<any>>, amount double, achieved_signatures map<any>) {
+    required_signatures.exists(rq, 
+        rq.amount_left <= amount && amount < rq.amount_right &&
+        rq.groups.exists(rqg, 
+            rqg.all(x,
+                achieved_signatures.exists(a, a == x) &&
+                rqg[x] <= achieved_signatures[x]
+            )
+        )
+    )
+}
+
+definition product_rights {
+    relation viewer: user
+
+    permission can_view = viewer
+}
+
+definition functional_group {
+    relation member: user
+}
+
+definition signing_group {
+    relation member: user
+}
+
+definition document_rights {
+    relation viewer: user
+    relation creator: user
+    relation signer: signing_group#member
+    relation sender: user
+    relation compliance: user:* with is_compliant
+
+    permission can_view = viewer
+    permission can_create = creator
+    permission can_sign = signer
+    permission can_send = sender & compliance
+}
+
+definition account {
+    relation balance_rights: product_rights
+    relation credit_transfer_rights: document_rights
+    relation foreign_transfer_rights: document_rights
+
+    permission balance_can_view = balance_rights->can_view
+
+    permission credit_transfer_can_view = credit_transfer_rights->can_view
+    permission credit_transfer_can_create = credit_transfer_rights->can_create
+    permission credit_transfer_can_sign = credit_transfer_rights->can_sign
+    permission credit_transfer_can_send = credit_transfer_rights->can_send
+
+    permission foreign_transfer_can_view =   foreign_transfer_rights->can_view
+    permission foreign_transfer_can_create = foreign_transfer_rights->can_create
+    permission foreign_transfer_can_sign =   foreign_transfer_rights->can_sign
+    permission foreign_transfer_can_send =   foreign_transfer_rights->can_send
+}
+
+definition credit_transfer {
+    relation payer_account: account
+    relation creator: user
+    relation signer: user
+
+    permission can_view = payer_account->credit_transfer_can_view
+    permission can_edit = payer_account->credit_transfer_can_create
+    permission can_sign = payer_account->credit_transfer_can_sign
+    permission can_send = payer_account->credit_transfer_can_send
+}
+
+definition foreign_transfer {
+    relation payer_account: account
+    relation creator: user
+    relation signer: user
+
+    permission can_view = payer_account->foreign_transfer_can_view
+    permission can_edit = payer_account->foreign_transfer_can_create
+    permission can_sign = payer_account->foreign_transfer_can_sign
+    permission can_send = payer_account->foreign_transfer_can_send
+}
+
+definition client {
+    relation generic_rights: product_rights
+
+    permission generic_can_view = generic_rights->can_view
+}
