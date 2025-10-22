@@ -36,7 +36,7 @@ let lookupSubjectsForAccount accountId =
 
     lookupSubjRs.ResponseStream.ReadAllAsync().ToBlockingEnumerable() |> Seq.toList
 
-let lookupResourcesForUser permission resourceObjectType userId =
+let lookupResourcesForUser permission resourceObjectType userId context =
     let lookupResRq = LookupResourcesRequest(
         Subject = SubjectReference(
             Object = ObjectReference(
@@ -46,7 +46,8 @@ let lookupResourcesForUser permission resourceObjectType userId =
         ),
         Permission = permission,
         ResourceObjectType = resourceObjectType,
-        Consistency = Consistency(FullyConsistent = true)
+        Consistency = Consistency(FullyConsistent = true),
+        Context = context
     )
     let lookupResRs = client.LookupResources(lookupResRq)
 
@@ -125,8 +126,17 @@ let checkBulkPermissions items =
 
 
 let subjects = lookupSubjectsForAccount "a1"
-let resources = lookupResourcesForUser "credit_transfer_can_create" "account" "a"
-let functionalities = lookupResourcesForUser "member" "functional_group" "a"
+let resources = lookupResourcesForUser "credit_transfer_can_create" "account" "a" null
+let functionalities = lookupResourcesForUser "member" "functional_group" "a" null
+
+
+let signingGroups = 
+    let context = Struct()
+    context.Fields.Add("now", Value.ForString("2024-06-15T12:00:00Z"))
+
+    lookupResourcesForUser "member" "signing_group" "av" context
+
+
 let relationships = readRelationshipsForAccount "a1"
 let userRelationships = readRelationshipsForUser "a"
 
@@ -134,13 +144,19 @@ let documentRelationships = readRelationshipsForResource (Some "document_rights"
 
 documentRelationships.[0].Relationship.OptionalCaveat.Context.Fields.["required_signatures"].ListValue.Values
 
+let canSign = 
+    let context = Struct()
+    context.Fields.Add("now", Value.ForString("2025-10-22T12:00:00Z"))
+    checkPermissionForUser "can_sign" "credit_transfer" "p1" "user" "av" context
+
+
 let context = Struct()
 context.Fields.Add("amount", Value.ForNumber(333))
 let achieved_signatures = Struct()
 achieved_signatures.Fields.Add("g1", Value.ForNumber(2.0))
 context.Fields.Add("achieved_signatures", Value.ForStruct(achieved_signatures))
 
-checkPermissionForUser "can_send" "credit_transfer" "p1"
+checkPermissionForUser "can_send" "credit_transfer" "p1" "user" "av" context
 
 let permissionship = checkPermissionForUser "credit_transfer_can_create" "account" "a1" "user" "a" null
 let permissionship_func = checkPermissionForUser "member" "functional_group" "banking_active" "user" "a"

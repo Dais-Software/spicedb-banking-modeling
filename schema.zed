@@ -12,6 +12,10 @@ caveat is_compliant(required_signatures list<map<any>>, amount double, achieved_
     )
 }
 
+caveat validity(now timestamp, valid_from timestamp, valid_to timestamp) {
+    now >= valid_from && now <= valid_to
+}
+
 definition product_rights {
     relation viewer: user
 
@@ -23,7 +27,7 @@ definition functional_group {
 }
 
 definition signing_group {
-    relation member: user
+    relation member: user | user with validity
 }
 
 definition document_rights {
