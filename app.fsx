@@ -150,13 +150,14 @@ let canSign =
     checkPermissionForUser "can_sign" "credit_transfer" "p1" "user" "av" context
 
 
-let context = Struct()
-context.Fields.Add("amount", Value.ForNumber(333))
-let achieved_signatures = Struct()
-achieved_signatures.Fields.Add("g1", Value.ForNumber(2.0))
-context.Fields.Add("achieved_signatures", Value.ForStruct(achieved_signatures))
+let canSend =
+    let context = Struct()
+    context.Fields.Add("amount", Value.ForNumber(333))
+    let achieved_signatures = Struct()
+    achieved_signatures.Fields.Add("g1", Value.ForNumber(2.0))
+    context.Fields.Add("achieved_signatures", Value.ForStruct(achieved_signatures))
 
-checkPermissionForUser "can_send" "credit_transfer" "p1" "user" "av" context
+    checkPermissionForUser "can_send" "credit_transfer" "p1" "user" "av" context
 
 let permissionship = checkPermissionForUser "credit_transfer_can_create" "account" "a1" "user" "a" null
 let permissionship_func = checkPermissionForUser "member" "functional_group" "banking_active" "user" "a"

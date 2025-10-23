@@ -9,26 +9,26 @@ relationships: |-
   functional_group:banking_passive#member@user:a
   functional_group:banking_passive#member@user:b
 
-  signing_group:g1#member@user:a
-  signing_group:g1#member@user:av[validity:{"valid_from":"2024-01-01T00:00:00Z","valid_to":"2024-12-31T23:59:59Z"}]
-  signing_group:g1#member@user:b
+  signing_group:a1|cp|g1#member@user:a
+  signing_group:a1|cp|g1#member@user:av[validity:{"valid_from":"2024-01-01T00:00:00Z","valid_to":"2024-12-31T23:59:59Z"}]
+  signing_group:a1|cp|g1#member@user:b
 
-  signing_group:g2#member@user:b
-  signing_group:g2#member@user:c
+  signing_group:a1|cp|g2#member@user:b
+  signing_group:a1|cp|g2#member@user:c
 
   product_rights:a1#viewer@user:a
 
-  document_rights:a1#creator@user:a
-  document_rights:a1#signer@signing_group:g1#member
-  document_rights:a1#signer@signing_group:g2#member
-  document_rights:a1#sender@user:a
-  document_rights:a1#sender@user:av
-  document_rights:a1#sender@user:c
-  document_rights:a1#compliance@user:*[is_compliant:{"required_signatures":[{"amount_left":0,"amount_right":1000,"groups":[{"g1":2},{"g1":1,"g2":1},{"g2":2}]},{"amount_left":1000,"amount_right":5000,"groups":[{"g2":2}]}]}]
+  document_rights:a1|cp#creator@user:a
+  document_rights:a1|cp#signer@signing_group:a1|cp|g1#member
+  document_rights:a1|cp#signer@signing_group:a1|cp|g2#member
+  document_rights:a1|cp#sender@user:a
+  document_rights:a1|cp#sender@user:av
+  document_rights:a1|cp#sender@user:c
+  document_rights:a1|cp#compliance@user:*[is_compliant:{"required_signatures":[{"amount_left":0,"amount_right":1000,"groups":[{"g1":2},{"g1":1,"g2":1},{"g2":2}]},{"amount_left":1000,"amount_right":5000,"groups":[{"g2":2}]}]}]
 
   account:a1#balance_rights@product_rights:a1
-  account:a1#credit_transfer_rights@document_rights:a1
-  account:a1#foreign_transfer_rights@document_rights:a1
+  account:a1#credit_transfer_rights@document_rights:a1|cp
+  account:a1#foreign_transfer_rights@document_rights:a1|fx
 
   credit_transfer:p1#payer_account@account:a1
   credit_transfer:p1#creator@user:a
