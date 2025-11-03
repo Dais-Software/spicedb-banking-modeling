@@ -1,18 +1,22 @@
+
+POST /users/123123/accounts/lookup-resources
 POST /accounts/permissions/lookup-resources
+
+
 POST /clients/permissions/lookup-resources
 POST /function-groups/permissions/lookup-resources
 или
 POST /accounts/permissions/credit_transfer_can_create/lookup-resources
 Content-Type: application/json
 {
-    "user_id": 123123,
+    "user": 123123,
     "permission": "credit_transfer_can_create"
 }
 Response: 200 OK
 Content-Type: application/json
 [
     {
-        "account_id": 67890,
+        "account": 67890,
         "has_permission": true
     }
 ]
@@ -24,7 +28,7 @@ sp_permission_lookup_resources @permission='credit_transfer_can_create' @user=12
 @returns
 [
     {
-        "account_id": 67890,
+        "account": 67890,
         "has_permission": true
     }
 ]
