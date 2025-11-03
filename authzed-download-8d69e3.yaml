@@ -1,0 +1,90 @@
+schema: |-
+  definition user {}
+
+  definition signature_group {
+  	relation group_limit: user:* with limit
+  	relation group_member: user
+  	
+  	permission can_approve = group_limit & group_member
+  }
+
+  definition account {
+  	relation signature_group: signature_group
+  	relation payment_executor: payment_executor
+  	
+  	permission can_view_groups = signature_group
+  	permission can_execute_payment = payment_executor
+  	permission can_approve_payment = signature_group->can_approve
+  }	
+
+  definition payment_executor {}
+
+  definition payment_authorization {
+  	relation payment_executor: payment_executor 
+  	
+  	permission is_authorized = payment_executor
+  }
+
+  definition payment {
+  	relation account: account
+  	relation payment_authorization: payment_authorization
+  	
+  	permission can_approve = account->can_approve_payment
+  	permission can_execute = account->can_execute_payment & payment_authorization.all(is_authorized)
+  }
+
+  caveat limit(approval_limit double, transaction_amount double) {
+  	transaction_amount <= approval_limit
+  }
+relationships: |-
+  // Set up signature groups with default approval limits, for different payment types. e.g. Bill payments and ACH payments.
+  signature_group:bill_level1#group_limit@user:*[limit:{"approval_limit":1000}]
+  signature_group:bill_level2#group_limit@user:*[limit:{"approval_limit":3000}]
+  signature_group:bill_level3#group_limit@user:*[limit:{"approval_limit":5000}]
+  signature_group:ach_level1#group_limit@user:*[limit:{"approval_limit":1000}]
+  signature_group:ach_level2#group_limit@user:*[limit:{"approval_limit":3000}]
+  signature_group:ach_level3#group_limit@user:*[limit:{"approval_limit":5000}]
+
+  // Associate a specific account with sig groups
+  account:a1#signature_group@signature_group:bill_level1
+  account:a1#signature_group@signature_group:bill_level2
+  account:a1#signature_group@signature_group:bill_level3
+  account:a1#signature_group@signature_group:ach_level1
+  account:a1#signature_group@signature_group:ach_level2
+
+  // For this account, let's use a custom value, not the default levels, for one of the payment types.
+  signature_group:ach_level3_custom_for_a1#group_limit@user:*[limit:{"approval_limit":10000}]
+  account:a1#signature_group@signature_group:ach_level3_custom_for_a1
+
+  // Using the relationships above, we can now populate the main screen "Common Limits" section with the various applicable group limits.
+  // Sample zed commands:
+  // zed perm lookup-subjects account:a1 can_view_groups signature_group
+  // zed relationship read signature_group:bill_level1
+  // 
+  // Associate approver with sig group
+  signature_group:bill_level1#group_member@user:a1
+  signature_group:bill_level2#group_member@user:a2
+
+  // Create payment types on an account
+  // Create payment request p1, for the specific account, pending all authorizations
+  payment:p1#account@account:a1
+
+  // Create the payment executor e.g. a system/batch user that can execute a payment when all authorizations are received.
+  account:a1#payment_executor@payment_executor:pe1
+
+  // Create the expected number of authorizations e.g. 3 distinct payment authorizations reuquired, with distict ids a1, a2, a3
+  payment:p1#payment_authorization@payment_authorization:pa-a1
+  payment:p1#payment_authorization@payment_authorization:pa-a2
+  payment:p1#payment_authorization@payment_authorization:pa-a3
+
+  // Finally, as authorizations are received, connect the authorizatoin with the payment executor.
+  // When all three are present ( all() ) syntax in schema, the payment can be executed.
+  payment_authorization:pa-a1#payment_executor@payment_executor:pe1
+  payment_authorization:pa-a2#payment_executor@payment_executor:pe1
+  payment_authorization:pa-a3#payment_executor@payment_executor:pe1
+assertions:
+  assertTrue:
+    - 'payment:payment1#can_authorize_level_1@user:user1 with {"transaction_amount": "100.00"}'
+  assertFalse:
+    - 'payment:payment1#can_authorize_level_1@user:user1 with {"transactionAmount": "6000.00"}'
+validation: null
