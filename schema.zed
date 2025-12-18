@@ -85,6 +85,10 @@ definition foreign_transfer {
 
 definition client {
     relation generic_rights: product_rights
+    relation payments_rights: document_rights
 
     permission generic_can_view = generic_rights->can_view
+
+    permission payments_can_view = payments_rights->can_view
+    permission payments_can_create = payments_rights->can_create
 }
