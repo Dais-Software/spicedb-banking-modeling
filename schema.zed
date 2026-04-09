@@ -16,6 +16,10 @@ caveat validity(now timestamp, valid_from timestamp, valid_to timestamp) {
     now >= valid_from && now <= valid_to
 }
 
+caveat limit(amount_left double, amount_right double, amount double) {
+    amount_left <= amount && amount < amount_right
+}
+
 definition product_rights {
     relation viewer: user
 
@@ -27,19 +31,22 @@ definition functional_group {
 }
 
 definition signing_group {
+  	relation limit: user:* with limit
     relation member: user | user with validity
+
+    permission can_sign = limit & member
 }
 
 definition document_rights {
     relation viewer: user
     relation creator: user
-    relation signer: signing_group#member
+    relation signer: signing_group
     relation sender: user
     relation compliance: user:* with is_compliant
 
     permission can_view = viewer
     permission can_create = creator
-    permission can_sign = signer
+    permission can_sign = signer->can_sign
     permission can_send = sender & compliance
 }
 
