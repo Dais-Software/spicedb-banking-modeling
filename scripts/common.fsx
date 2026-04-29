@@ -22,26 +22,31 @@ let createAuthzedClient () =
 
 let client = createAuthzedClient ()
 
-let lookupSubjectsForAccount accountId =
+let lookupSubjects objectType objectId permission subjectObjectType context =
     let lookupSubjRq = LookupSubjectsRequest(
         Resource = ObjectReference(
-            ObjectType = "account",
-            ObjectId = accountId
+            ObjectType = objectType,
+            ObjectId = objectId
         ),
-        Permission = "credit_transfer_can_create",
-        SubjectObjectType = "user",
-        Consistency = Consistency(FullyConsistent = true)
+        Permission = permission,
+        SubjectObjectType = subjectObjectType,
+        Consistency = Consistency(FullyConsistent = true),
+        Context = context
     )
     let lookupSubjRs = client.LookupSubjects(lookupSubjRq)
 
-    lookupSubjRs.ResponseStream.ReadAllAsync().ToBlockingEnumerable() |> Seq.toList
+    lookupSubjRs.ResponseStream.ReadAllAsync().ToBlockingEnumerable()
+    |> Seq.toList
 
-let lookupResourcesForUser permission resourceObjectType userId context =
+let lookupSubjectsForAccount accountId=
+    lookupSubjects "account" accountId "credit_transfer_can_create" "user" null
+
+let lookupResources objectType objectId permission resourceObjectType  context =
     let lookupResRq = LookupResourcesRequest(
         Subject = SubjectReference(
             Object = ObjectReference(
-                ObjectType = "user",
-                ObjectId = userId
+                ObjectType = objectType,
+                ObjectId = objectId
             )
         ),
         Permission = permission,
@@ -51,8 +56,11 @@ let lookupResourcesForUser permission resourceObjectType userId context =
     )
     let lookupResRs = client.LookupResources(lookupResRq)
 
-    lookupResRs.ResponseStream.ReadAllAsync().ToBlockingEnumerable() |> Seq.toList
+    lookupResRs.ResponseStream.ReadAllAsync().ToBlockingEnumerable()
+    |> Seq.toList
 
+let lookupResourcesForUser userId permission resourceObjectType  context =
+    lookupResources "user" userId permission resourceObjectType context
 
 let readRelationshipsForResource (resourceType: string option) (resourceId: string option) (subjectType: string option) (subjectId: string option) =
     let filter = RelationshipFilter()
@@ -85,7 +93,7 @@ let readRelationshipsForUser userId =
     readRelationshipsForResource None None (Some "user") (Some userId)
 
 
-let checkPermissionForUser permission resourceType resourceId subjectType subjectId context =
+let checkPermission permission resourceType resourceId subjectType subjectId context =
     let checkPerRq = CheckPermissionRequest(
         Consistency = Consistency(FullyConsistent = true),
         Permission = permission,
@@ -123,42 +131,3 @@ let checkBulkPermissions items =
             )
         ))
     client.CheckBulkPermissions(checkBulkRq)
-
-
-let subjects = lookupSubjectsForAccount "a1"
-let resources = lookupResourcesForUser "credit_transfer_can_create" "account" "a" null
-let functionalities = lookupResourcesForUser "member" "functional_group" "a" null
-
-
-let signingGroups = 
-    let context = Struct()
-    context.Fields.Add("now", Value.ForString("2024-06-15T12:00:00Z"))
-
-    lookupResourcesForUser "member" "signing_group" "av" context
-
-
-let relationships = readRelationshipsForAccount "a1"
-let userRelationships = readRelationshipsForUser "a"
-
-let documentRelationships = readRelationshipsForResource (Some "document_rights") (Some "a1") None None
-
-documentRelationships.[0].Relationship.OptionalCaveat.Context.Fields.["required_signatures"].ListValue.Values
-
-let canSign = 
-    let context = Struct()
-    context.Fields.Add("now", Value.ForString("2025-10-22T12:00:00Z"))
-    checkPermissionForUser "can_sign" "credit_transfer" "p1" "user" "av" context
-
-
-let canSend =
-    let context = Struct()
-    context.Fields.Add("amount", Value.ForNumber(333))
-    let achieved_signatures = Struct()
-    achieved_signatures.Fields.Add("g1", Value.ForNumber(2.0))
-    context.Fields.Add("achieved_signatures", Value.ForStruct(achieved_signatures))
-
-    checkPermissionForUser "can_send" "credit_transfer" "p1" "user" "av" context
-
-let permissionship = checkPermissionForUser "credit_transfer_can_create" "account" "a1" "user" "a" null
-let permissionship_func = checkPermissionForUser "member" "functional_group" "banking_active" "user" "a"
-let checkBulkRs = checkBulkPermissions [("account", "a1", "credit_transfer_can_create", "user", "a")]

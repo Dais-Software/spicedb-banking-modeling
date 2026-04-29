@@ -40,7 +40,7 @@ definition signing_group {
 definition document_rights {
     relation viewer: user
     relation creator: user
-    relation signer: signing_group
+    relation signer: signing_group with limit
     relation sender: user
     relation compliance: user:* with is_compliant
  
@@ -53,8 +53,8 @@ definition document_rights {
  
 definition account {
     relation balance_rights: product_rights
-    relation credit_transfer_rights: document_rights with limit
-    relation foreign_transfer_rights: document_rights with limit
+    relation credit_transfer_rights: document_rights
+    relation foreign_transfer_rights: document_rights
  
     permission balance_can_view = balance_rights->can_view
  
