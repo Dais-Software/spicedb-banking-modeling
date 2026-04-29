@@ -9,43 +9,44 @@ relationships: |-
   functional_group:banking_passive#member@user:a
   functional_group:banking_passive#member@user:b
 
-  signing_group:a1|cp|g1|1000#limit@user:*[limit:{"amount_left":0,"amount_right":1000}]
-  signing_group:a1|cp|g1|1000#member@user:a
-  signing_group:a1|cp|g1|1000#member@user:e
+  signing_group:a1|cp|g1|1000000#member@user:a
+  signing_group:a1|cp|g2|1000000#member@user:b
+  signing_group:a1|cp|g3|1000000#member@user:e
+  signing_group:a1|cp|g4|1000#member@user:a
+  signing_group:a1|cp|g5|1000#member@user:b
+  signing_group:a1|fx|g5|1000#member@user:a
 
-  signing_group:a1|cp|g2|1000#limit@user:*[limit:{"amount_left":0,"amount_right":1000}]
-  signing_group:a1|cp|g2|1000#member@user:b
-  signing_group:a1|cp|g2|1000#member@user:e
-
-  signing_group:a1|cp|g3|1000#limit@user:*[limit:{"amount_left":0,"amount_right":1000}]
-  signing_group:a1|cp|g3|1000#member@user:c
-  signing_group:a1|cp|g3|1000#member@user:e
-
-  signing_group:a1|cp|g4|1000#limit@user:*[limit:{"amount_left":0,"amount_right":1000}]
-  signing_group:a1|cp|g4|1000#member@user:d
-  signing_group:a1|cp|g4|1000#member@user:e
-
+  signing_group:a2|cp|g1|10000#member@user:a
+  signing_group:a2|cp|g2|10000#member@user:b
+  signing_group:a2|cp|g3|10000#member@user:e
+  signing_group:a2|cp|g4|10#member@user:a
+  signing_group:a2|cp|g5|10#member@user:b
+  signing_group:a2|fx|g5|10#member@user:a
+  
   product_rights:a1#viewer@user:a
-
   document_rights:a1|cp#creator@user:a
-  document_rights:a1|cp#signer@signing_group:a1|cp|g1|1000
-  document_rights:a1|cp#signer@signing_group:a1|cp|g2|1000
-  document_rights:a1|cp#signer@signing_group:a1|cp|g3|1000
+  document_rights:a1|cp#signer@signing_group:a1|cp|g1|1000000
+  document_rights:a1|cp#signer@signing_group:a1|cp|g2|1000000
+  document_rights:a1|cp#signer@signing_group:a1|cp|g3|1000000
   document_rights:a1|cp#signer@signing_group:a1|cp|g4|1000
-
+  document_rights:a1|cp#signer@signing_group:a1|cp|g5|1000
   document_rights:a1|cp#sender@user:a
   document_rights:a1|cp#sender@user:av
   document_rights:a1|cp#sender@user:c
-  document_rights:a1|cp#compliance@user:*[is_compliant:{"required_signatures":[{"amount_left":0,"amount_right":1000,"groups":[{"g1":1,"g2":1},{"g1":1,"g3":1},{"g1":1,"g4":1},{"g2":1,"g3":1},{"g2":1,"g4":1},{"g3":1,"g4":1}]}]}]
-
+  document_rights:a1|cp#compliance@user:*[is_compliant:{"required_signatures":[{"amount_left":0,"amount_right":1000,"groups":[{"g4":1,"g5":1}]},{"amount_left":0,"amount_right":1000000,"groups":  [{"g1":1,"g3":1},{"g2":1,"g3":1}]}]}]
+  document_rights:a2|cp#creator@user:a
+  document_rights:a2|cp#signer@signing_group:a2|cp|g1|10000
+  document_rights:a2|cp#signer@signing_group:a2|cp|g2|10000
+  document_rights:a2|cp#signer@signing_group:a2|cp|g3|10000
+  document_rights:a2|cp#signer@signing_group:a2|cp|g4|10
+  document_rights:a2|cp#signer@signing_group:a2|cp|g5|10
+  document_rights:a2|cp#compliance@user:*[is_compliant:{"required_signatures":[{"amount_left":0,"amount_right":10,"groups":[{"g4":1,"g5":1}]},{"amount_left":0,"amount_right":10000,"groups":  [{"g1":1,"g3":1},{"g2":1,"g3":1}]}]}]
   account:a1#balance_rights@product_rights:a1
-  account:a1#credit_transfer_rights@document_rights:a1|cp
+  account:a1#credit_transfer_rights@document_rights:a1|cp[limit:{"amount_left":0,"amount_right":1000000}]
   account:a1#foreign_transfer_rights@document_rights:a1|fx
-
   credit_transfer:p1#payer_account@account:a1
   credit_transfer:p1#creator@user:a
-
-
+  account:a2#credit_transfer_rights@document_rights:a1|cp[limit:{"amount_left":0,"amount_right":5000}]
 
 assertions:
   assertTrue:
@@ -60,3 +61,6 @@ assertions:
     - 'credit_transfer:p1#can_send@user:a with { "amount": 3333, "achieved_signatures": {"g1": 2} }'
     - 'credit_transfer:p1#can_send@user:b with { "amount": 3333, "achieved_signatures": {"g1": 2} }'
     - 'credit_transfer:p1#can_send@user:a with { "amount": 3333, "achieved_signatures": {"g2": 1} }'
+
+
+    
