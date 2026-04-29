@@ -4,7 +4,10 @@ open Common
 open Google.Protobuf.WellKnownTypes
 open System.Linq
 
-let signingGroups users: string list = 
+let amount = 5455.5
+let users = ["a"; "e"]
+
+let signingGroupsForUsers users: string list = 
     let context = Struct()
     context.Fields.Add("now", Value.ForString("2024-06-15T12:00:00Z"))
 
@@ -13,15 +16,30 @@ let signingGroups users: string list =
         lookupResourcesForUser userId "can_sign" "signing_group" context)
     |> List.map (fun r -> r.ResourceObjectId)
 
-let creditTransferGroups amount =
+let creditTransferSigningGroupsForAccount accountId amount =
     let context = Struct()
     context.Fields.Add("amount", Value.ForNumber(amount))
 
-    lookupSubjects "account" "a1" "credit_transfer_signing_group" "signing_group" context
+    lookupSubjects "account" accountId "credit_transfer_signing_group" "signing_group" context
     |> List.map (fun r -> r.Subject.SubjectObjectId)
 
-(signingGroups ["a"; "b"; "e"])
-    .Join(creditTransferGroups 300, id, id, fun res subj -> res, subj)
-    .GroupBy(fun (res, subj) -> res)
-    .Select(fun g -> (g.Key, g.Count()))
-|> Seq.toList
+let achievedSignatures = 
+    (signingGroupsForUsers users)
+        .Join(creditTransferSigningGroupsForAccount "a1" amount, id, id, fun res subj -> res)
+        .GroupBy(id)
+        .Select(fun g -> (g.Key, g.Count()))
+    |> Seq.map (fun (group, count) -> 
+        (group.Split('|').[2], count))
+    |> Seq.toList
+
+let canSend =
+    let context = Struct()
+    context.Fields.Add("amount", Value.ForNumber(amount))
+    let achieved_signatures = Struct()
+
+    for (group, count) in achievedSignatures do
+        achieved_signatures.Fields.Add(group, Value.ForNumber(float count))
+
+    context.Fields.Add("achieved_signatures", Value.ForStruct(achieved_signatures))
+
+    checkPermission "credit_transfer_can_send" "account" "a1" "user" "a" context
