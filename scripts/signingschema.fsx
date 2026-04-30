@@ -26,10 +26,10 @@ let creditTransferSigningGroupsForAccount accountId amount =
 let achievedSignatures = 
     (signingGroupsForUsers users)
         .Join(creditTransferSigningGroupsForAccount "a1" amount, id, id, fun res subj -> res)
-        .GroupBy(id)
-        .Select(fun g -> (g.Key, g.Count()))
-    |> Seq.map (fun (group, count) -> 
-        (group.Split('|').[2], count))
+    |> Seq.map (fun res -> 
+        (res.Split('|').[2]))
+    |> Seq.groupBy id
+    |> Seq.map (fun (group, instances) -> (group, instances.Count()))
     |> Seq.toList
 
 let canSend =
