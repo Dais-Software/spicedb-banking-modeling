@@ -7,7 +7,7 @@ open System.Linq
 let amount = 5455.5
 let users = ["a"; "e"]
 
-let signingGroupsForUsers users: string list = 
+let canSignSigningGroupsForUsers users: string list = 
     let context = Struct()
     context.Fields.Add("now", Value.ForString("2024-06-15T12:00:00Z"))
 
@@ -24,12 +24,13 @@ let creditTransferSigningGroupsForAccount accountId amount =
     |> List.map (fun r -> r.Subject.SubjectObjectId)
 
 let achievedSignatures = 
-    (signingGroupsForUsers users)
-        .Join(creditTransferSigningGroupsForAccount "a1" amount, id, id, fun res subj -> res)
-    |> Seq.map (fun res -> 
-        (res.Split('|').[2]))
-    |> Seq.groupBy id
-    |> Seq.map (fun (group, instances) -> (group, instances.Count()))
+    query {
+        for usersSigningGroup in canSignSigningGroupsForUsers users do
+        join accountsSigningGroup in creditTransferSigningGroupsForAccount "a1" amount 
+            on (usersSigningGroup = accountsSigningGroup)
+        groupBy (usersSigningGroup.Split('|').[2]) into g
+        select (g.Key, g.Count())
+    }
     |> Seq.toList
 
 let canSend =
