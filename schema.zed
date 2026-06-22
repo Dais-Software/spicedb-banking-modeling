@@ -51,6 +51,20 @@ definition document_rights {
     permission group_signer = signer
 }
  
+definition request_forms_rights {
+    relation viewer: user
+    relation creator: user
+    relation signer: signing_group
+    relation sender: user
+    relation compliance: user:* with is_compliant
+
+    permission can_view = viewer
+    permission can_create = creator
+    permission can_sign = signer->can_sign
+    permission can_send = sender & compliance
+    permission group_signer = signer
+}
+
 definition account {
     relation balance_rights: product_rights
     relation credit_transfer_rights: document_rights
@@ -96,10 +110,17 @@ definition foreign_transfer {
 definition client {
     relation generic_rights: product_rights
     relation payments_rights: document_rights
- 
+    relation request_forms_rights: request_forms_rights
+
     permission generic_can_view = generic_rights->can_view
- 
+
     permission payments_can_view = payments_rights->can_view
     permission payments_can_create = payments_rights->can_create
+
+    permission request_forms_can_view = request_forms_rights->can_view
+    permission request_forms_can_create = request_forms_rights->can_create
+    permission request_forms_can_sign = request_forms_rights->can_sign
+    permission request_forms_can_send = request_forms_rights->can_send
+    permission request_forms_signing_group = request_forms_rights->group_signer
 }
  
