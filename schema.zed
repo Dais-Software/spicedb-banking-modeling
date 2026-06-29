@@ -11,6 +11,17 @@ caveat is_compliant(required_signatures list<map<any>>, amount double, achieved_
         )
     )
 }
+
+caveat is_compliant_representative(required_signatures list<map<any>>, achieved_signatures map<any>) {
+    required_signatures.exists(rq,
+        rq.groups.exists(rqg,
+            rqg.all(x,
+                achieved_signatures.exists(a, a == x) &&
+                rqg[x] <= achieved_signatures[x]
+            )
+        )
+    )
+}
  
 caveat validity(now timestamp, valid_from timestamp, valid_to timestamp) {
     now >= valid_from && now <= valid_to
@@ -50,19 +61,25 @@ definition document_rights {
     permission can_send = sender & compliance
     permission group_signer = signer
 }
+
+definition representative_group {
+    relation member: user | user with validity
+
+    permission can_represent = member
+}
  
 definition request_forms_rights {
     relation viewer: user
     relation creator: user
-    relation signer: signing_group
+    relation representative: representative_group
     relation sender: user
-    relation compliance: user:* with is_compliant
+    relation compliance: user:* with is_compliant_representative
 
     permission can_view = viewer
     permission can_create = creator
-    permission can_sign = signer->can_sign
+    permission can_represent = representative->can_represent
     permission can_send = sender & compliance
-    permission group_signer = signer
+    permission group_representative = representative
 }
 
 definition account {
@@ -117,10 +134,10 @@ definition client {
     permission payments_can_view = payments_rights->can_view
     permission payments_can_create = payments_rights->can_create
 
-    permission request_forms_can_view = request_forms_rights->can_view
-    permission request_forms_can_create = request_forms_rights->can_create
-    permission request_forms_can_sign = request_forms_rights->can_sign
-    permission request_forms_can_send = request_forms_rights->can_send
-    permission request_forms_signing_group = request_forms_rights->group_signer
+    permission add_account_can_view = request_forms_rights->can_view
+    permission add_account_can_create = request_forms_rights->can_create
+    permission add_account_can_represent = request_forms_rights->can_represent
+    permission add_account_can_send = request_forms_rights->can_send
+    permission add_account_representative_group = request_forms_rights->group_representative
 }
  
