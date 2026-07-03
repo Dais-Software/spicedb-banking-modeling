@@ -127,17 +127,17 @@ definition foreign_transfer {
 definition client {
     relation generic_rights: product_rights
     relation payments_rights: document_rights
-    relation request_forms_rights: request_forms_rights
+    relation add_account_request_forms_rights: request_forms_rights
 
     permission generic_can_view = generic_rights->can_view
 
     permission payments_can_view = payments_rights->can_view
     permission payments_can_create = payments_rights->can_create
 
-    permission add_account_can_view = request_forms_rights->can_view
-    permission add_account_can_create = request_forms_rights->can_create
-    permission add_account_can_represent = request_forms_rights->can_represent
-    permission add_account_can_send = request_forms_rights->can_send
-    permission add_account_representative_group = request_forms_rights->group_representative
+    permission add_account_request_forms_can_view = add_account_request_forms_rights->can_view
+    permission add_account_request_forms_can_create = add_account_request_forms_rights->can_create
+    permission add_account_request_forms_can_represent = add_account_request_forms_rights->can_represent
+    permission add_account_request_forms_can_send = add_account_request_forms_rights->can_send
+    permission add_account_request_forms_representative_group = add_account_request_forms_rights->group_representative
 }
  
