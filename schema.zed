@@ -11,6 +11,17 @@ caveat is_compliant(required_signatures list<map<any>>, amount double, achieved_
         )
     )
 }
+
+caveat is_compliant_representative(required_signatures list<map<any>>, achieved_signatures map<any>) {
+    required_signatures.exists(rq,
+        rq.groups.exists(rqg,
+            rqg.all(x,
+                achieved_signatures.exists(a, a == x) &&
+                rqg[x] <= achieved_signatures[x]
+            )
+        )
+    )
+}
  
 caveat validity(now timestamp, valid_from timestamp, valid_to timestamp) {
     now >= valid_from && now <= valid_to
@@ -50,7 +61,27 @@ definition document_rights {
     permission can_send = sender & compliance
     permission group_signer = signer
 }
+
+definition representative_group {
+    relation member: user | user with validity
+
+    permission can_represent = member
+}
  
+definition request_forms_rights {
+    relation viewer: user
+    relation creator: user
+    relation representative: representative_group
+    relation sender: user
+    relation compliance: user:* with is_compliant_representative
+
+    permission can_view = viewer
+    permission can_create = creator
+    permission can_represent = representative->can_represent
+    permission can_send = sender & compliance
+    permission group_representative = representative
+}
+
 definition account {
     relation balance_rights: product_rights
     relation credit_transfer_rights: document_rights
@@ -96,10 +127,17 @@ definition foreign_transfer {
 definition client {
     relation generic_rights: product_rights
     relation payments_rights: document_rights
- 
+    relation add_account_request_form_rights: request_forms_rights
+
     permission generic_can_view = generic_rights->can_view
- 
+
     permission payments_can_view = payments_rights->can_view
     permission payments_can_create = payments_rights->can_create
+
+    permission add_account_request_form_can_view = add_account_request_form_rights->can_view
+    permission add_account_request_form_can_create = add_account_request_form_rights->can_create
+    permission add_account_request_form_can_represent = add_account_request_form_rights->can_represent
+    permission add_account_request_form_can_send = add_account_request_form_rights->can_send
+    permission add_account_request_form_representative_group = add_account_request_form_rights->group_representative
 }
  
